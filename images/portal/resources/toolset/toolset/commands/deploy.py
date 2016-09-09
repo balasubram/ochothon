@@ -109,7 +109,7 @@ class _Automation(Thread):
                 #
                 stamp = datetime.datetime.fromtimestamp(time.time()).strftime('%Y-%m-%d-%H-%M-%S')
                 qualified = '%s.%s' % (self.namespace, cfg['cluster'])
-                application = 'ochopod.%s-%s' % (qualified, stamp)
+                application = cfg['id'] if 'id' in cfg else 'ochopod.%s-%s' % (qualified, stamp)
                 if qualified in self.overrides:
 
                     blk = self.overrides[qualified]
@@ -220,8 +220,7 @@ class _Automation(Thread):
                                     {
                                         'forcePullImage': True,
                                         'image': image,
-                                        'network': 'BRIDGE',
-                                        'portMappings': ports
+                                        'network':  cfg['network'] if 'network' in cfg else 'BRIDGE'
                                     },
                                 'volumes':
                                     [
@@ -238,6 +237,11 @@ class _Automation(Thread):
                                     ]
                             }
                     }
+                    
+                #
+                # Update port mappings in docker dictionary only when the network type is 'BRIDGE'
+                #
+                spec['container']['docker'].update({} if ('network' in cfg and cfg['network'] == 'HOST') else  {'portMappings': ports})
 
                 #
                 # - if we have a 'verbatim' block in our image definition yaml, merge it now
